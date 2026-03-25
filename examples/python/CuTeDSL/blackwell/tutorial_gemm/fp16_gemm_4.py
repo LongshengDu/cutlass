@@ -184,11 +184,11 @@ def cluster_specific_kernel(
         * len((mma_warp_id, *epilogue_warp_ids)),  # 5 warps = 160 threads
     )
     tmem = utils.TmemAllocator(
-        storage.tmem_holding_buffer,
+        storage.tmem_holding_buffer.ptr,
         barrier_for_retrieve=tmem_alloc_barrier,
         allocator_warp_id=epilogue_warp_ids[0],
         is_two_cta=True,
-        two_cta_tmem_dealloc_mbar_ptr=storage.tmem_dealloc_mbar,
+        two_cta_tmem_dealloc_mbar_ptr=storage.tmem_dealloc_mbar.ptr,
     )
 
     num_tma_copy_bytes = (
@@ -687,6 +687,8 @@ def kernel(
     )
 
     # As for now, only support preferred cluster kernel via the mega-kernel approach
+    # mega-kernel approach has 2 mutually exclusive code branches, only one path runs per launch,
+    # specify `smem_merge_branch_allocs=True` at launch to enable shared memory reuse between two paths
     if is_preferred_cluster:
         cluster_specific_kernel(
             tiled_mma,
@@ -969,6 +971,7 @@ def host_function(
         block=[224, 1, 1] if use_clc_dynamic_scheduler else [192, 1, 1],
         cluster=preferred_cluster_shape_mnk,
         fallback_cluster=fallback_cluster_shape_mnk,
+        smem_merge_branch_allocs=True,
     )
 
 
