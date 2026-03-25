@@ -103,7 +103,7 @@ def kernel(
         num_threads=threads_per_cta,
     )
     tmem = utils.TmemAllocator(
-        storage.tmem_holding_buf,
+        storage.tmem_holding_buf.ptr,
         barrier_for_retrieve=tmem_alloc_barrier,
     )
     num_tmem_cols = 512
